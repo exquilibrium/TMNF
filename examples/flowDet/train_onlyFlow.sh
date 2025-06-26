@@ -15,7 +15,7 @@ then
 fi
 
 FEAT_TYPE="logits" # 'logits'
-ONLY_EVAL=True
+ONLY_EVAL=False
 
 cd $path
 echo 'In directory:'$path

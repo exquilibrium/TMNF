@@ -5,9 +5,8 @@ DATA="voc" # voc coco
 
 if [ $DATA = "voc" ]
 then 
-    CONFIG="flowDet/feat_ext/faster_rcnn_r50_fpn_voc0712OS_msFeats.py"
-    # CONFIG="flowDet/feat_ext/faster_rcnn_r50_fpn_voc0712OS_clsFeats.py"
-    WEIGHT_DIR="/frcnn_CACCE_Voc_A01" 
+    CONFIG="flowDet/feat_ext/faster_rcnn_r50_fpn_voc0712OS_clsLogits.py"
+    WEIGHT_DIR="/home/chen/openset_detection/mmdetection/weights/frcnn_CACCE_Voc_A01" 
     SAVE_NAME="GMMDet_Voc_msFeats" # GMMDet_Voc_msFeats, CE_Voc_msFeats, FlowDet_Voc_msFeats
 elif [ $DATA = "coco" ]
 then

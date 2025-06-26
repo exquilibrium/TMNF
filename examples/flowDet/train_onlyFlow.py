@@ -157,7 +157,7 @@ def main(args):
 
 	# get data and prepare data set
 	# for loading saved features extracted from the detector
-	saved_feat_dir = f"{BASE_FEAT_FOLDER}/{detector_type}/associated/{cfg.dataset_type}"
+	saved_feat_dir = f"{BASE_FEAT_FOLDER}/flowDet/{detector_type}/associated/{cfg.dataset_type}"
 	tst_res_path = f"{saved_feat_dir}/test/{feat_fn}.json"
 	test_dataloader, testTypes = setup_dataloader(tst_res_path, batch_size=params_dict["batch_size"], data_type="eval", feat=args.feat_type, log_file=log_file)
 	logger.info(f"test #type 0: {np.sum(testTypes==0)}")

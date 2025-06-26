@@ -46,6 +46,9 @@ def main(argparse):
             ds_subsets = [cfg.data.trainCS07, cfg.data.trainCS12]
             raw_res_pth_list = [f"{raw_res_dir}/trainCS07/{saveFileName}.json",
                                 f"{raw_res_dir}/trainCS12/{saveFileName}.json"]
+        if "XML" in cfg.dataset_type:
+            ds_subsets = [cfg.data.trainCS]
+            raw_res_pth_list = [f"{raw_res_dir}/trainCS/{saveFileName}.json"]
 
         print(f'Assigning train data on {cfg.dataset_type}')
         print(f"Loading outputs from {raw_res_pth_list}.")

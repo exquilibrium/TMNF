@@ -1,9 +1,9 @@
 _base_ = ['../../feat_ext/faster_rcnn_r50_fpn_voc0712OS_clsLogits.py']
 flow_params=dict(
     random_seed = 3,
-	num_cls = 16,
+	num_cls = 16, ### <<<<<<<<<<---------- NUM CLASSES ---------->>>>>>>>>> 
 	flow_type = "rnvp", # "rnvp", "residual", "nsf_ar"
-	input_dim = 16,
+	input_dim = 16, ### <<<<<<<<<<---------- NUM CLASSES ---------->>>>>>>>>> 
 	blocks = 16,
 	hidden_dim = 64,
 	num_layers_st_net = 4,
@@ -27,7 +27,7 @@ flow_params=dict(
 	base_dropout = 0.1, 
 	base_init_zeros = True,
 	######## training specific ########
-	num_class = 16,
+	num_class = 16, ### <<<<<<<<<<---------- NUM CLASSES ---------->>>>>>>>>> 
 	batch_size = 1024,
 	max_epochs = 400,
 	val_freq = 5,

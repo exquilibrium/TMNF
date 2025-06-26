@@ -22,8 +22,8 @@ CONFIG_ROOT = FLOWDET_CONFIG_ROOT
 def parse_args():
     parser = argparse.ArgumentParser(description='A script to extract corresponding features and save the raw detections')
     parser.add_argument('--datasplit_type', type=str, help='to which data split produced by the code of which version: GMMDet or flowDet, flowDet_msfeats')
-    parser.add_argument('--config', default = '/flowDet/feat_ext/faster_rcnn_r50_fpn_voc0712OS_clsLogits.py', help='config of voc or coco')
-    parser.add_argument('--subset', default = None, help='voc: trainCS12/07 or val or testOS, coco: trainCS, val, testOS')
+    parser.add_argument('--config', default = '/flowDet/feat_ext/faster_rcnn_r50_fpn_voc0712OS_clsLogits_<dataset>.py', help='config of voc or coco')
+    parser.add_argument('--subset', default = None, help='custom: coco subsetnames, but voc dataset. voc: trainCS12/07 or val or testOS, coco: trainCS, val, testOS')
     parser.add_argument('--maxOneDetOneRP', default=True, 
                         help=("the constraint applied on filtering raw predictions from a detector:"
                         "to get the detection with highest scores among those from the same region proposal."))
@@ -72,9 +72,11 @@ def main(argparse):
         ds_subsets = ["trainCS"]
     elif "VOC" in cfg.dataset_type and argparse.subset == "train":
         ds_subsets = ["trainCS07", "trainCS12"]
+    elif "XML" in cfg.dataset_type and argparse.subset == "train": # All custom scripts with XMLDataset will go here
+        ds_subsets = ["trainCS"]
         
     for ds_subset in ds_subsets:
-        save_path = f"{FLOWDET_FEAT_ROOT}{argparse.datasplit_type}/{cfg.model.type}/raw/{cfg.dataset_type}/{ds_subset}" #_conf{confThresh}"
+        save_path = f"{FLOWDET_FEAT_ROOT}/{argparse.datasplit_type}/{cfg.model.type}/raw/{cfg.dataset_type}/{ds_subset}" #_conf{confThresh}"
         os.makedirs(save_path, exist_ok=True)
         print(f"Running inference on {cfg.dataset_type}/{ds_subset} with samples_per_gpu {samples_per_gpu}")
         dataset = build_dataset(cfg.data[ds_subset])

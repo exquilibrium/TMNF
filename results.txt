@@ -1,0 +1,24 @@
+
+CACCE
+2025-06-16 19:32:13,383:     INFO - flowDet_mmdet.utils.functional_utils:  tpKnown_nll after filtering out 0 Nans: 33.486
+2025-06-16 19:32:13,383:     INFO - flowDet_mmdet.utils.functional_utils:  fpUnknown_nll after filtering out 0 Nans: 41.049
+adding logging file /home/chen/TMNF/data/trained_weights/FasterRCNN/VOCDataset/rnvp/GMMDet_Voc_msFeats_logits/resampled_cls_ib/fixed_prior/beta30.0_sig0.5_T100_eps0.05_3*128_Ini0True_dp0.1_affine_exp_16*[4*64]_Adam_0.0001_bs1024_max400_gnormNone_rnd3/20250616_193203.log
+2025-06-16 19:32:13,387:     INFO - flowDet_mmdet.utils.gmmDet_utils:  Results for Method: rnvp_resampled_cls_ib
+2025-06-16 19:32:13,387:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ AUPR: 0.995
+2025-06-16 19:32:13,387:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ AUROC: 0.944
+2025-06-16 19:32:13,387:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ TPR at 4.9FPR: 76.0
+2025-06-16 19:32:13,387:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ TPR at 10.0FPR: 83.2
+2025-06-16 19:32:13,387:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ TPR at 20.1FPR: 89.6
+
+ANCHOR XML
+2025-06-16 20:32:53,610:     INFO - flowDet_mmdet.utils.functional_utils:  tpKnown_nll after filtering out 0 Nans: 34.060
+2025-06-16 20:32:53,611:     INFO - flowDet_mmdet.utils.functional_utils:  fpUnknown_nll after filtering out 0 Nans: 40.990
+2025-06-16 20:32:53,613:     INFO - flowDet_mmdet.utils.gmmDet_utils:  Results for Method: rnvp_resampled_cls_ib
+2025-06-16 20:32:53,614:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ AUPR: 0.992
+2025-06-16 20:32:53,614:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ AUROC: 0.931
+2025-06-16 20:32:53,614:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ TPR at 5.0FPR: 73.5
+2025-06-16 20:32:53,614:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ TPR at 10.0FPR: 82.5
+2025-06-16 20:32:53,614:     INFO - flowDet_mmdet.utils.gmmDet_utils:  ------ TPR at 20.0FPR: 89.5
+
+
+"/media/chen/76AECF8EAECF4579/data/lru1_all_labels"
