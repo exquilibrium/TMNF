@@ -250,7 +250,7 @@ def assign_types(dataHolder, dets, gt, clsCutoff, iouThresh=0.5):
 
 def assign_eval(ds_dict, raw_res_pth, num_classes, scoreThresh=0.2, iouThresh=0.5, gtLabel_mapping=None):
     testDataset = build_dataset(ds_dict)
-    pprint.pprint(ds_dict)
+    #pprint.pprint(ds_dict)
     lenDataset = len(testDataset)
     num_logits = num_classes # yolo has not background class
     all_filenames = []

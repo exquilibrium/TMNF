@@ -1,8 +1,7 @@
 # dataset settings
 
 dataset_type = 'XMLDataset' ### <<<<<<<<<<---------- Important ---------->>>>>>>>>>
-#data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/lru1_all'
-data_root = '/media/chen/76AECF8EAECF4579/data/lru1_all'
+data_root = '/media/chen/76AECF8EAECF4579/data/VOCdevkit_xml/'
 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
@@ -33,10 +32,8 @@ test_pipeline = [
         ])
 ]
 
-CS_suffix = "_CS_lander"
-#voc_os_classes=["drone", "lander", "lru2"] # !!! Using custom
-voc_os_classes=["drone", "lru2", "lander"] # !!! Excluded OS classes need to be on the right
-voc_cs_classes=["drone", "lru2"]
+voc_cs_classes = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person']
+voc_os_classes = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 
 data = dict(
     samples_per_gpu=4,
@@ -48,32 +45,38 @@ data = dict(
             type=dataset_type,
             classes=voc_cs_classes, # CS
             ann_file=[
-                data_root + f'/ImageSets/Main{CS_suffix}/train.txt',
+                data_root + 'VOC0712/ImageSets/Main_CS/train.txt'
             ],
-            img_prefix=[data_root],
+            img_prefix=[data_root + 'VOC0712/'],
             pipeline=train_pipeline)),
     trainCS=dict(
         type=dataset_type,
         classes=voc_cs_classes, # CS
-        ann_file=data_root + f'/ImageSets/Main{CS_suffix}/train.txt',
-        img_prefix=data_root,
-        pipeline=test_pipeline), ### <<<<<<<<<<---------- test pipeline ---------->>>>>>>>>> 
+        ann_file=data_root + 'VOC0712/ImageSets/Main_CS/train.txt',
+        img_prefix=data_root + 'VOC0712/',
+        pipeline=test_pipeline),
     val=dict(
         type=dataset_type,
         classes=voc_cs_classes, # CS
-        ann_file=data_root + f'/ImageSets/Main{CS_suffix}/val.txt',
-        img_prefix=data_root,
+        ann_file=data_root + 'VOC0712/ImageSets/Main_CS/val.txt',
+        img_prefix=data_root + 'VOC0712/',
         pipeline=test_pipeline),
     testCS=dict(
         type=dataset_type,
         classes=voc_cs_classes, # CS
-        ann_file=data_root + f'/ImageSets/Main{CS_suffix}/test.txt',
-        img_prefix=data_root,
+        ann_file=data_root + 'VOC0712/ImageSets/Main_CS/test.txt',
+        img_prefix=data_root + 'VOC0712/',
         pipeline=test_pipeline),
     testOS=dict(
         type=dataset_type,
         classes=voc_os_classes, # OS
-        ann_file=data_root + '/ImageSets/Main/test.txt',
-        img_prefix=data_root,
+        ann_file=data_root + 'VOC0712/ImageSets/Main/test.txt',
+        img_prefix=data_root + 'VOC0712/',
+        pipeline=test_pipeline),
+    testOOD=dict(
+        type=dataset_type,
+        classes=voc_os_classes, # OOD only
+        ann_file=data_root + 'VOC0712/ImageSets/Main/test_ood.txt',
+        img_prefix=data_root + 'VOC0712/',
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='mAP')

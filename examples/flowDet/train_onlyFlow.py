@@ -83,7 +83,7 @@ def flow_folder_name_generator(params_dict):
 					)
 	return folder_suffix
 
-def crete_logging_file(log_folder, only_eval):
+def create_logging_file(log_folder, only_eval):
 
 	# time_str = time.ctime().replace(" ", "")
 	time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime())
@@ -95,9 +95,9 @@ def crete_logging_file(log_folder, only_eval):
 	os.system(f"echo 'Conda:' $(which conda) | tee -a {log_file}")
 	os.system(f"echo $(pwd) | tee -a {log_file}")
 	os.system(f"echo 'Version:' $(VERSION) | tee -a {log_file}")
-	os.system(f"echo 'Git diff:'| tee -a {log_file}")
-	os.system(f"git diff | tee -a {log_file}")
-	os.system(f"nvidia-smi| tee -a {log_file}")
+	#os.system(f"echo 'Git diff:'| tee -a {log_file}")
+	#os.system(f"git diff | tee -a {log_file}")
+	#os.system(f"nvidia-smi| tee -a {log_file}")
 
 	log_file = f"{log_folder}/{time_str}.log"
 	return log_file
@@ -117,6 +117,8 @@ def main(args):
 	flow_type = params_dict["flow_type"]
 
 	detector_type = cfg.model.type
+	if "yolo" in args.feat_fn:
+		detector_type = "YOLOv8"
 	feat_fn = args.feat_fn
 	torch.manual_seed(params_dict['random_seed'])
 	np.random.seed(params_dict['random_seed'])
@@ -136,7 +138,7 @@ def main(args):
 		assert os.path.isdir(log_folder), f"{log_folder} doesn't exist!"
 
 	os.makedirs(log_folder, exist_ok=True)
-	log_file = crete_logging_file(log_folder, args.only_eval)
+	log_file = create_logging_file(log_folder, args.only_eval)
 	logger = get_logger("train_onlyFLow", log_file)
 	# for saving the model
 	save_model_dir = osp.join(log_folder, "saved_model")

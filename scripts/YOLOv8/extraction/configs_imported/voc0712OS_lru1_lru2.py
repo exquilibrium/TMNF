@@ -33,10 +33,9 @@ test_pipeline = [
         ])
 ]
 
-CS_suffix = "_CS_lander"
-#voc_os_classes=["drone", "lander", "lru2"] # !!! Using custom
-voc_os_classes=["drone", "lru2", "lander"] # !!! Excluded OS classes need to be on the right
-voc_cs_classes=["drone", "lru2"]
+CS_suffix = "_CS_lru2"
+voc_os_classes=["drone", "lander", "lru2"] # !!! Custom and default pipeline supported
+voc_cs_classes=["drone", "lander"]
 
 data = dict(
     samples_per_gpu=4,

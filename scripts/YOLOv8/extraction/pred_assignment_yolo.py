@@ -3,6 +3,8 @@ import os
 import argparse
 import numpy as np
 from mmcv import Config
+from pathlib import Path
+import importlib
 
 from gmmDet_utils_yolov8 import *
 
@@ -10,16 +12,12 @@ from gmmDet_utils_yolov8 import *
 tmnf_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, tmnf_root)
 
-#from configs._base_.datasets.voc0712OS_yolo import *
-from configs._base_.datasets.voc0712OS_xml import * # TODO: this aint working
-
 # Functions
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
-
 
 def save_results_json(results, save_path):
     jsonRes = json.dumps(results, cls=NumpyEncoder)
@@ -31,16 +29,21 @@ def save_results_json(results, save_path):
     print(f"Saving to {save_path}.json")
     f.close()
 
-def pred_assignment(datasplit: str, num_classes: int, confThresh: float, iouThresh: float):
-    dataset_type = 'VOCDataset'
-    saveFileName = 'YOLOv8_Voc_msFeats'
-    save_dir = f"/home/chen/TMNF/data/datasets/extracted_feat/FasterRCNN/associated/{dataset_type}"
-    raw_res_dir = f"/home/chen/TMNF/data/extracted_feat/flowDet/YOLOv8/associated/XMLDataset/{datasplit}"
+def pred_assignment(datasplit: str,
+                    num_classes: int,
+                    confThresh: float,
+                    iouThresh: float,
+                    base_path: str,
+                    saveNm: str):
+    dataset_type = 'XMLDataset'
+    saveFileName = saveNm
+    save_dir = f"{base_path}/data/datasets/extracted_feat/flowDet/YOLOv8/associated/{dataset_type}"
+    raw_res_dir = f"{base_path}/data/datasets/extracted_feat/flowDet/YOLOv8/raw/XMLDataset/{datasplit}"
     
     # process train data
     if datasplit == "train":
         ds_subsets = [data['trainCS']]
-        raw_res_pth_list = [f"{raw_res_dir}/VOC0712_YOLO_CS.json"]
+        raw_res_pth_list = [f"{raw_res_dir}/{saveNm}.json"]
 
         print(f'Assigning train data on {dataset_type}')
         print(f"Loading outputs from {raw_res_pth_list}.")
@@ -56,7 +59,7 @@ def pred_assignment(datasplit: str, num_classes: int, confThresh: float, iouThre
     # process eval data
     elif datasplit == "val":
         print(f'Assigning val data on {dataset_type}.')
-        raw_output_file =  f"{raw_res_dir}/VOC0712_YOLO_CS.json"
+        raw_output_file =  f"{raw_res_dir}/{saveNm}.json"
         print(f"Loading outputs from {raw_output_file}.")
 
         # Val on CLOSED-SET
@@ -77,7 +80,7 @@ def pred_assignment(datasplit: str, num_classes: int, confThresh: float, iouThre
 
         evalDict = {}
         print(f'Assigning Open-Set test data on {dataset_type}.')
-        raw_output_file =  f"{raw_res_dir}/VOC0712_YOLO.json"
+        raw_output_file =  f"{raw_res_dir}/{saveNm}.json"
         print(f"Loading outputs from {raw_output_file}.")
 
         # Test on OPEN-SET
@@ -101,15 +104,40 @@ def pred_assignment(datasplit: str, num_classes: int, confThresh: float, iouThre
 # CLI: TODO
 def main():
     parser = argparse.ArgumentParser(description='Assign predictions for train, val, test set.')
-    parser.add_argument('split', type=str, help='Split: train/val/test. Note: train and val are CS, but test is OS.')
+    parser.add_argument('model_path', type=str, help='Path to YOLO model.')
+    parser.add_argument('image_set', type=str, help='Split: train/val/test. Note: train and val are CS, but test is OS.')
+    parser.add_argument('saveNm', type=str, help='Save name of output')
     parser.add_argument('--num_classes', type=int, default=3, help='Number of classes.')
     parser.add_argument('--conf_thresh', type=float, default=0.2, help='Confidence Threshold.')
-    parser.add_argument('--iou_thresh', type=float, default=0.7, help='IOU Threshold.')
+    parser.add_argument('--iou_thresh', type=float, default=0.5, help='IOU Threshold.')
     args = parser.parse_args()
 
     print('Assigning Predictions!')
 
-    pred_assignment(args.split, args.num_classes, args.conf_thresh, args.iou_thresh)
+    # Config loader
+    prefix = "FlowDet_Voc_clsLogits_"
+    suffix = "_yolo"
+    config_map = {
+        "lru1": "voc0712OS_lru1",
+        "lru1_lander": "voc0712OS_lru1_lander",
+        "lru1_drone": "voc0712OS_lru1_drone",
+        "lru1_lru2": "voc0712OS_lru1_lru2",
+        "xml": "voc0712OS_xml"
+    }
+    config_key = args.saveNm[len(prefix):-len(suffix)]
+    module_name = config_map[config_key]
+    config_module = importlib.import_module(f"configs_imported.{module_name}")
+    # Equivalent to: from configs_imported.module_name import *
+    globals().update(vars(config_module))
+    print(f"Imported dataset config: configs_imported.{module_name}")
+
+    # Setting path
+    split = Path(args.image_set).stem # Split: train/val/test.
+    parts = args.model_path.split('/') # /home/chen/openset_detection/.../best.pt
+    base = f"/{parts[1]}/{parts[2]}/TMNF" # /home/chen/TMNF
+
+
+    pred_assignment(split, args.num_classes, args.conf_thresh, args.iou_thresh, base, args.saveNm)
         
 
 if __name__ == "__main__":

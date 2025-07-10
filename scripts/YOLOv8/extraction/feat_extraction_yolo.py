@@ -4,20 +4,28 @@ from pathlib import Path
 import argparse
 
 import cv2
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torchvision.ops as ops
-from PIL import Image
 import tqdm
-import random
 
 from ultralytics import YOLO
 from ultralytics.nn.modules.head import Detect
-from ultralytics.utils import ops as yolo_ops
+from ultralytics.utils import ops
 
 # https://gist.github.com/justinkay/8b00a451b1c1cc3bcf210c86ac511f46
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+def save_results_json(results, save_path):
+    json_str = json.dumps(results, cls=NumpyEncoder)
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    with open(f"{save_path}.json", 'w') as f:
+        f.write(json_str)
+    print(f"Saved to {save_path}.json")
+
 class SaveIO:
     """Simple PyTorch hook to save the output of a nn.module."""
     def __init__(self):
@@ -68,99 +76,7 @@ def load_and_prepare_model(model_path):
 
     return model, hooks
 
-def run_predict_single(img_path, model, hooks, num_classes, conf_threshold=0.5, iou_threshold=0.7):
-    """
-    Run prediction with a YOLO model and apply Non-Maximum Suppression (NMS) to the results.
-
-    Args:
-        img_path (str): Path to an image file.
-        model (YOLO): YOLO model object.
-        hooks (list): List of hooks for the model.
-        num_classes (int): Number of classes.
-        conf_threshold (float, optional): Confidence threshold for detection. Default is 0.5.
-        iou_threshold (float, optional): Intersection over Union (IoU) threshold for NMS. Default is 0.7.
-
-    Returns:
-        list: List of selected bounding box dictionaries after NMS.
-    """
-    # Unpack hooks from load_and_prepare_model()
-    input_hook, detect, detect_hook, cv2_hooks, cv3_hooks = hooks
-
-    # Run inference. Results are stored by hooks
-    model(img_path, verbose=False)
-
-    # Reverse engineer outputs to find logits
-    # See Detect.forward(): https://github.com/ultralytics/ultralytics/blob/b638c4ed9a24270a6875cdd47d9eeda99204ef5a/ultralytics/nn/modules/head.py#L22
-    shape = detect_hook.input[0][0].shape  # BCHW
-    x = []
-    for i in range(detect.nl):
-        x.append(torch.cat((cv2_hooks[i].output, cv3_hooks[i].output), 1))
-    x_cat = torch.cat([xi.view(shape[0], detect.no, -1) for xi in x], 2)
-    box, classes = x_cat.split((detect.reg_max * 4, detect.nc), 1)
-
-    # Assume batch size 1 (i.e. just running with one image)
-    # Loop here to batch images
-    batch_idx = 0
-    xywh_sigmoid = detect_hook.output[0][batch_idx]
-    all_logits = classes[batch_idx]
-
-    # Get original image shape and model image shape to transform boxes
-    img_shape = input_hook.input[0].shape[2:]
-    orig_img_shape = model.predictor.batch[1][batch_idx].shape[:2]
-
-    # Compute predictions
-    boxes = []
-    for i in range(xywh_sigmoid.shape[-1]): # for each predicted box...
-        x0, y0, x1, y1, *class_probs_after_sigmoid = xywh_sigmoid[:,i]
-        x0, y0, x1, y1 = yolo_ops.scale_boxes(img_shape, np.array([x0.cpu(), y0.cpu(), x1.cpu(), y1.cpu()]), orig_img_shape)
-        logits = all_logits[:,i]
-        
-        boxes.append({
-            'image_id': img_path,
-            'bbox': [x0.item(), y0.item(), x1.item(), y1.item()], # xyxy
-            'bbox_xywh': [(x0.item() + x1.item())/2, (y0.item() + y1.item())/2, x1.item() - x0.item(), y1.item() - y0.item()],
-            'logits': logits.cpu().tolist(),
-            'activations': [p.item() for p in class_probs_after_sigmoid]
-        })
-
-    # Debugging
-    # top10 = sorted(boxes, key=lambda x: max(x['activations']), reverse=True)[:10]
-    # plot_image(img_path, top10, suffix="before_nms")
-
-    # NMS
-    # We can keep the activations and logits around via the YOLOv8 NMS method, but only if we
-    # append them as an additional time to the prediction vector. It's a weird hacky way to do it,
-    # but it works. We also have to pass in the num classes (nc) parameter to make it work.
-    boxes_for_nms = torch.stack([
-        torch.tensor([
-            *b['bbox_xywh'],
-            *b['activations'],
-            *b['activations'],
-            *b['logits']]) for b in boxes
-    ], dim=1).unsqueeze(0)
-    nms_results = yolo_ops.non_max_suppression(boxes_for_nms, conf_thres=conf_threshold, iou_thres=iou_threshold, nc=detect.nc)[0]
-    
-    # Unpack and return
-    boxes = []
-    for b in range(nms_results.shape[0]):
-        box = nms_results[b, :]
-        x0, y0, x1, y1, conf, cls, *acts_and_logits = box
-        activations = acts_and_logits[:detect.nc]
-        logits = acts_and_logits[detect.nc:]
-        box_dict = {
-            'bbox': [x0.item(), y0.item(), x1.item(), y1.item()], # xyxy
-            'bbox_xywh': [(x0.item() + x1.item())/2, (y0.item() + y1.item())/2, x1.item() - x0.item(), y1.item() - y0.item()],
-            'best_conf': conf.item(),
-            'best_cls': cls.item(),
-            'image_id': img_path,
-            'activations': [p.item() for p in activations],
-            'logits': [p.item() for p in logits]
-        }
-        boxes.append(box_dict)
-
-    return boxes
-
-def run_predict(img, img_path, model, hooks, num_classes, conf_threshold=0.5, iou_threshold=0.7):
+def run_predict(img, img_path, model, hooks, num_classes, conf_threshold, iou_threshold):
     """
     Run prediction with a YOLO model and apply Non-Maximum Suppression (NMS) to the results.
 
@@ -204,7 +120,7 @@ def run_predict(img, img_path, model, hooks, num_classes, conf_threshold=0.5, io
     boxes = []
     for i in range(xywh_sigmoid.shape[-1]): # for each predicted box...
         x0, y0, x1, y1, *class_probs_after_sigmoid = xywh_sigmoid[:,i]
-        x0, y0, x1, y1 = yolo_ops.scale_boxes(img_shape, np.array([x0.cpu(), y0.cpu(), x1.cpu(), y1.cpu()]), orig_img_shape)
+        x0, y0, x1, y1 = ops.scale_boxes(img_shape, np.array([x0.cpu(), y0.cpu(), x1.cpu(), y1.cpu()]), orig_img_shape)
         logits = all_logits[:,i]
         
         boxes.append({
@@ -223,35 +139,8 @@ def run_predict(img, img_path, model, hooks, num_classes, conf_threshold=0.5, io
             *b['activations'],
             *b['logits']]) for b in boxes
     ], dim=1).unsqueeze(0)
-    """
-    nms_results = yolo_ops.non_max_suppression(
-        boxes_for_nms,
-        conf_thres=conf_threshold,
-        iou_thres=iou_threshold,
-        nc=detect.nc)[0]
-    
-    # Unpack and return in bbox2result format
-    class_results = [[] for _ in range(num_classes)]
 
-    for b in range(nms_results.shape[0]):
-        box = nms_results[b, :]
-        x0, y0, x1, y1, conf, cls, *acts_and_logits = box
-        logits = acts_and_logits[detect.nc:]
-        cls_idx = int(cls.item())
-        bbox = [x0.item(), y0.item(), x1.item(), y1.item()] # xyxy
-        score = conf.item()
-        logits = [p.item() for p in logits]  # list of floats, len == num_classes
-
-        # Pack [x1, y1, x2, y2, score, logit_0, ..., logit_C]
-        row = bbox + [score] + logits
-        class_results[cls_idx].append(row)
-
-    # Convert each class list to np.ndarray of shape (k_i, 5+num_classes)
-    class_results = [np.array(cls_boxes, dtype=np.float32) if cls_boxes else np.zeros((0, 5+num_classes), dtype=np.float32)
-                     for cls_boxes in class_results]
-    
-    """
-    nms_results_batch = yolo_ops.non_max_suppression(
+    nms_results_batch = ops.non_max_suppression(
         boxes_for_nms,
         conf_thres=conf_threshold,
         iou_thres=iou_threshold,
@@ -286,7 +175,7 @@ def run_predict(img, img_path, model, hooks, num_classes, conf_threshold=0.5, io
 
     return class_results
 
-def run_inference_yolo(model_path, image_set, num_classes, confThresh=0.5, iouThresh=0.7):
+def run_inference_yolo(model_path, image_set, num_classes, confThresh, iouThresh):
     """
     Process raw YOLO output from images in a folder using captured logits.
     Collects detections per image efficiently using vectorized operations.
@@ -356,180 +245,15 @@ def run_inference_yolo(model_path, image_set, num_classes, confThresh=0.5, iouTh
 
     return allResults
 
-# Save results
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
-def save_results_json(results, save_path):
-    json_str = json.dumps(results, cls=NumpyEncoder)
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    with open(f"{save_path}.json", 'w') as f:
-        f.write(json_str)
-    print(f"Saved to {save_path}.json")
-
-def save_single_result_json(results):
-    # Create a list to store the predictions data
-    predictions = []
-
-    for result in results:
-        image_id = os.path.basename(result['image_id'])#.split('.')[0]
-        # image_id = result["image_id"]
-        # image_id = os.path.basename(img_path).split('.')[0]
-        max_category_id = result['activations'].index(max(result['activations']))
-        category_id = max_category_id
-        bbox = result['bbox']
-        score = max(result['activations'])
-        activations = result['activations']
-
-        prediction = {
-            'image_id': image_id,
-            'category_id': category_id,
-            'bbox': bbox,
-            'score': score,
-            'activations': activations
-        }
-
-        predictions.append(prediction)
-
-    # Write the predictions list to a JSON file
-    with open('predictions.json', 'w') as f:
-        json.dump(predictions, f)
-
-# Visualization
-def annotate_image_helper(image, results, class_names):
-    boxes = results.boxes.xyxy.cpu().numpy()
-    confs = results.boxes.conf.cpu().numpy()
-    clss = results.boxes.cls.cpu().numpy().astype(int)
-
-    for box, conf, cls in zip(boxes, confs, clss):
-        x1, y1, x2, y2 = map(int, box)
-        label = f"{class_names[cls]} {conf:.2f}"
-        cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(image, label, (x1, y1 - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
-    return image
-
-def visualize_batch(model_path: str, image_dir: str):
-    # Config
-    image_folder = Path(image_dir)
-    num_x, num_y = 5, 6
-    images_per_batch = num_x * num_y
-    num_batches = 1
-
-    # Load model
-    model = YOLO(model_path)
-    class_names = model.names  # class ID -> name mapping
-
-    # Collect image paths
-    all_images = sorted(image_folder.glob('*.jpg'))
-    random.shuffle(all_images)
-
-    # Pick images for all batches
-    total_images = images_per_batch * num_batches
-    selected_images = all_images[:total_images]
-
-    # Process images in batches
-    for page in range(num_batches):
-        batch_paths = selected_images[page * images_per_batch : (page + 1) * images_per_batch]
-        fig, axs = plt.subplots(num_y, num_x, figsize=(16, 16))
-        axs = axs.flatten()
-
-        for i, img_path in enumerate(batch_paths):
-            img = cv2.imread(str(img_path))
-            img_rgb = img[:, :, ::-1]  # BGR to RGB
-            results = model.predict(img_rgb, verbose=False)[0]
-                
-            annotated = annotate_image_helper(img.copy(), results, class_names)
-            axs[i].imshow(annotated[:, :, ::-1])  # back to RGB for matplotlib
-            
-            # Get list of class labels from results
-            clss = results.boxes.cls.cpu().numpy().astype(int)
-            confs = results.boxes.conf.cpu().numpy()
-            detected_labels = [f"{class_names[cls]} ({conf:.2f})" for cls, conf in zip(clss, confs)]
-
-            # Create title with image name and classes
-            title = img_path.name
-            # if detected_labels:
-            #     title += ":\n" + ", ".join(detected_labels)
-            axs[i].set_title(title, fontsize=8)
-
-            axs[i].axis('off')
-
-            # Hide empty subplots (if any)
-            for j in range(i + 1, len(axs)):
-                axs[j].axis('off')
-
-        plt.tight_layout()
-        plt.show()
-
-def plot_image(img_path, results, category_mapping=None, suffix='test', show_labels=True, include_legend=True):
-    """
-    Display the image with bounding boxes and their corresponding class scores.
-
-    Args:
-        img_path (str): Path to the image file.
-        results (list): List of dictionaries containing bounding box information.
-        category_mapping:
-        suffix: what to append to the original image name when saving
-
-    Returns:
-        None
-    """
-
-    img = Image.open(img_path)
-    fig, ax = plt.subplots()
-    ax.imshow(img)
-
-    for box in results:
-        x0, y0, x1, y1 = map(int, box['bbox'])
-
-        box_color = "r"  # red
-        tag_color = "k"  # black
-        max_score = max(box['activations'])
-        max_category_id = box['activations'].index(max_score)
-        category_name = max_category_id
-
-        if category_mapping:
-            max_category_name = category_mapping.get(max_category_id, "Unknown")
-            category_name = max_category_name
-
-        rect = patches.Rectangle(
-            (x0, y0),
-            x1 - x0,
-            y1 - y0,
-            edgecolor=box_color,
-            label=f"{max_category_id}: {category_name} ({max_score:.2f})",
-            facecolor='none'
-        )
-        ax.add_patch(rect)
-
-        if show_labels:
-            plt.text(
-                x0,
-                y0 - 50,
-                f"{max_category_id} ({max_score:.2f})",
-                fontsize="5",
-                color=tag_color,
-                backgroundcolor=box_color,
-            )
-
-    if include_legend:
-        ax.legend(fontsize="5")
-
-    plt.axis("off")
-    # plt.savefig(f'{os.path.basename(img_path).rsplit(".", 1)[0]}_{suffix}.jpg', bbox_inches="tight", dpi=300)
-
 # CLI
 def main():
     parser = argparse.ArgumentParser(description='Extract logits for train, val, test set.')
     parser.add_argument('model_path', type=str, help='Path to YOLO model.')
     parser.add_argument('image_set', type=str, help='Path to imageset txt.')
+    parser.add_argument('saveNm', type=str, help='Save name of output')
     parser.add_argument('--num_classes', type=int, default=3, help='Number of classes.')
     parser.add_argument('--conf_thresh', type=float, default=0.2, help='Confidence Threshold.')
-    parser.add_argument('--iou_thresh', type=float, default=0.7, help='IOU Threshold.')
+    parser.add_argument('--iou_thresh', type=float, default=0.5, help='IOU Threshold.')
     args = parser.parse_args()
 
     print('Extracting features!')
@@ -539,13 +263,10 @@ def main():
                             confThresh=args.conf_thresh,
                             iouThresh=args.iou_thresh)
     # Setting path
-    split = Path(args.image_set).stem
-    parts = Path(args.image_set).parts
-    index = parts.index("ImageSets")
-    left = parts[index - 1]     # 'VOC0712'
-    right = parts[index + 1]    # 'YOLO_CS'
-    dataset = f"{left}_{right}"  # 'VOC0712_YOLO_CS'
-    save_path = f'/home/chen/TMNF/data/extracted_feat/flowDet/YOLOv8/associated/XMLDataset/{split}/{dataset}'
+    split = Path(args.image_set).stem # train/val/test
+    parts = args.model_path.split('/') # /home/chen/openset_detection/.../best.pt
+    base = f"/{parts[1]}/{parts[2]}/TMNF" # /home/chen/TMNF
+    save_path = f'{base}/data/datasets/extracted_feat/flowDet/YOLOv8/raw/XMLDataset/{split}/{args.saveNm}'
     save_results_json(results, save_path)
 
 

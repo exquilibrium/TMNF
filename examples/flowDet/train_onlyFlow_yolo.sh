@@ -1,11 +1,14 @@
 #!/bin/bash 
+source ~/miniforge3/etc/profile.d/conda.sh
+conda activate tmnf_mmdet
+
 path=$( dirname -- "$( readlink -f -- "$0"; )"; )
 
 CONFIG="rnvp_logits_rbf_cls_ib" # [rnvp,nsf,residual]_logits_["", gmm, gmm_cls, gmm_cls_ib, rbf, rbf_cls, rbf_cls_ib]
 SCRIPT="train_onlyFlow.py"
 
-NF_CONFIF="flowDet/train/onlyFlow_voc/oF_frcnn_voc_rnvp_logits_rbf_cls_ib_${1}.py"
-FEAT_FN="FlowDet_Voc_clsLogits_${1}" # "GMMDet_Voc_msFeats", "CE_Voc_msFeats"
+NF_CONFIF="flowDet/train/onlyFlow_voc/oF_frcnn_voc_rnvp_logits_rbf_cls_ib_${1}_yolo.py"
+FEAT_FN="FlowDet_Voc_clsLogits_${1}_yolo" # "GMMDet_Voc_msFeats", "CE_Voc_msFeats"
 
 FEAT_TYPE="logits" # 'logits'
 ONLY_EVAL=False
