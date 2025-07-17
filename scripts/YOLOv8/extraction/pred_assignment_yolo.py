@@ -118,9 +118,13 @@ def main():
     prefix = "FlowDet_Voc_clsLogits_"
     suffix = "_yolo"
     config_map = {
+        "ardea10": "voc0712OS_ardea10",
+        "ardea10_lander": "voc0712OS_ardea10_lander",
+        "ardea10_lru1": "voc0712OS_ardea10_lru1",
+        "ardea10_lru2": "voc0712OS_ardea10_lru2",
         "lru1": "voc0712OS_lru1",
-        "lru1_lander": "voc0712OS_lru1_lander",
         "lru1_drone": "voc0712OS_lru1_drone",
+        "lru1_lander": "voc0712OS_lru1_lander",
         "lru1_lru2": "voc0712OS_lru1_lru2",
         "xml": "voc0712OS_xml"
     }

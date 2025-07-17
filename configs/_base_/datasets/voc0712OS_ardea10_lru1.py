@@ -1,8 +1,8 @@
 # dataset settings
 
 dataset_type = 'XMLDataset' ### <<<<<<<<<<---------- Important ---------->>>>>>>>>>
-#data_root = '/media/chen/76AECF8EAECF4579/data/lru1_all'
-data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/lru1_all'
+#data_root = '/media/chen/76AECF8EAECF4579/data/ardea10_all'
+data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/ardea10_all'
 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
@@ -33,9 +33,10 @@ test_pipeline = [
         ])
 ]
 
-CS_suffix = "_CS_drone"
-#voc_os_classes=["drone", "lander", "lru2"] # !!! Using custom
-voc_os_classes=["lander", "lru2", "drone"] # !!! Excluded OS classes need to be on the right
+CS_suffix = "_CS_lru1"
+#voc_os_classes=["lander", "lru1", "lru2"] # !!! Use custom data association
+# This is the correct way, but Yolov8 needs to be reindexed before training.
+voc_os_classes=["lander", "lru2", "lru1"] # !!! Use normal get_results
 voc_cs_classes=["lander", "lru2"]
 
 data = dict(
@@ -74,6 +75,12 @@ data = dict(
         type=dataset_type,
         classes=voc_os_classes, # OS
         ann_file=data_root + '/ImageSets/Main/test.txt',
+        img_prefix=data_root,
+        pipeline=test_pipeline),
+    testOOD=dict(
+        type=dataset_type,
+        classes=voc_os_classes, # CS
+        ann_file=data_root + f'/ImageSets/Main{CS_suffix}/test_ood.txt',
         img_prefix=data_root,
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='mAP')

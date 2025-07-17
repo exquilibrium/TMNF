@@ -4,18 +4,20 @@
 
 # First 15 classes of PASCAL-VOC
 # === SET PATH TO DATASET DIRECTORY!!! ===
-MODEL_BASE_DIR="/home/chen"
-DATASET_BASE_DIR="/media/chen/76AECF8EAECF4579/data"
+#MODEL_BASE_DIR="/home/chen"
+MODEL_BASE_DIR="/home/chen_le"
+#DATASET_BASE_DIR="/media/chen/76AECF8EAECF4579/data"
+DATASET_BASE_DIR="/volume_hot_storage/slurm_data/chen_le/ARCHES"
+DS="lru1"
 CS="drone"
 
-MODEL_PATH="${MODEL_BASE_DIR}/openset_detection/scripts/YOLOv8/training/runs/detect/train_lru1_${CS}/weights/best.pt"
-TRAIN_SET="${DATASET_BASE_DIR}/lru1_all/ImageSets/YOLO_CS_${CS}/train.txt"
-VAL_SET="${DATASET_BASE_DIR}/lru1_all/ImageSets/YOLO_CS_${CS}/val.txt"
-TEST_SET="${DATASET_BASE_DIR}/lru1_all/ImageSets/YOLO/test.txt"
+MODEL_PATH="${MODEL_BASE_DIR}/openset_detection/scripts/YOLOv8/training/runs/detect/train_${DS}_${CS}/weights/best.pt"
+TRAIN_SET="${DATASET_BASE_DIR}/${DS}_all/ImageSets/YOLO_CS_${CS}/train.txt"
+VAL_SET="${DATASET_BASE_DIR}/${DS}_all/ImageSets/YOLO_CS_${CS}/val.txt"
+TEST_SET="${DATASET_BASE_DIR}/${DS}_all/ImageSets/YOLO/test.txt"
 CONF_THRESH=0.2
 IOU_THRESH=0.5
 # === SET PATH TO DATASET DIRECTORY!!! ===
-DS="lru1"
 saveNm="FlowDet_Voc_clsLogits_${DS}_${CS}_yolo" # FlowDet_Voc_clsLogits_lru1_drone_yolo
 
 

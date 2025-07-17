@@ -8,7 +8,7 @@
 MODEL_BASE_DIR="/home/chen_le"
 #DATASET_BASE_DIR="/media/chen/76AECF8EAECF4579/data"
 DATASET_BASE_DIR="/volume_hot_storage/slurm_data/chen_le/ARCHES"
-DS="lru1"
+DS="ardea10"
 
 MODEL_PATH="${MODEL_BASE_DIR}/openset_detection/scripts/YOLOv8/training/runs/detect/train_${DS}/weights/best.pt"
 TRAIN_SET="${DATASET_BASE_DIR}/${DS}_all/ImageSets/YOLO/train.txt"

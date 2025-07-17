@@ -4,10 +4,15 @@
 
 # First 15 classes of PASCAL-VOC
 # === SET PATH TO DATASET DIRECTORY!!! ===
-MODEL_PATH="/home/chen/openset_detection/scripts/YOLOv8/training/runs/detect/train_voc0712/weights/best.pt"
-TRAIN_SET="/media/chen/76AECF8EAECF4579/data/VOCdevkit_xml/VOC0712/ImageSets/YOLO_CS/train.txt"
-VAL_SET="/media/chen/76AECF8EAECF4579/data/VOCdevkit_xml/VOC0712/ImageSets/YOLO_CS/val.txt"
-TEST_SET="/media/chen/76AECF8EAECF4579/data/VOCdevkit_xml/VOC0712/ImageSets/YOLO/test.txt"
+#MODEL_BASE_DIR="/home/chen"
+MODEL_BASE_DIR="/home/chen_le"
+#DATASET_BASE_DIR="/media/chen/76AECF8EAECF4579/data"
+DATASET_BASE_DIR="/volume_hot_storage/slurm_data/chen_le/"
+
+MODEL_PATH="${MODEL_BASE_DIR}/openset_detection/scripts/YOLOv8/training/runs/detect/train_voc0712/weights/best.pt"
+TRAIN_SET="${DATASET_BASE_DIR}/VOCdevkit_xml/VOC0712/ImageSets/YOLO_CS/train.txt"
+VAL_SET="${DATASET_BASE_DIR}/VOCdevkit_xml/VOC0712/ImageSets/YOLO_CS/val.txt"
+TEST_SET="${DATASET_BASE_DIR}/VOCdevkit_xml/VOC0712/ImageSets/YOLO/test.txt"
 CONF_THRESH=0.2
 IOU_THRESH=0.5
 # === SET PATH TO DATASET DIRECTORY!!! ===

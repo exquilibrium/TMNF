@@ -1,7 +1,8 @@
 # dataset settings
 
 dataset_type = 'XMLDataset' ### <<<<<<<<<<---------- Important ---------->>>>>>>>>>
-data_root = '/media/chen/76AECF8EAECF4579/data/VOCdevkit_xml/'
+#data_root = '/media/chen/76AECF8EAECF4579/data/VOCdevkit_xml/'
+data_root = '/volume/hot_storage/slurm_data/chen_le/VOCdevkit_xml/'
 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
