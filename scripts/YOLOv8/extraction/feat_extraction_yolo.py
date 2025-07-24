@@ -76,6 +76,21 @@ def load_and_prepare_model(model_path):
 
     return model, hooks
 
+from torch.utils.data import Dataset, DataLoader
+
+class ImagePathDataset(Dataset):
+    def __init__(self, image_set_txt):
+        with open(image_set_txt, 'r') as f:
+            self.image_paths = [Path(line.strip()) for line in f if line.strip().endswith('.jpg')]
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx):
+        path = self.image_paths[idx]
+        img = cv2.imread(str(path))
+        return path, img
+
 def run_predict(img, img_path, model, hooks, num_classes, conf_threshold, iou_threshold):
     """
     Run prediction with a YOLO model and apply Non-Maximum Suppression (NMS) to the results.
@@ -95,7 +110,8 @@ def run_predict(img, img_path, model, hooks, num_classes, conf_threshold, iou_th
     input_hook, detect, detect_hook, cv2_hooks, cv3_hooks = hooks
 
     # Run inference. Results are stored by hooks
-    model(img, verbose=False)
+    with torch.no_grad():
+        model(imgs_batch, verbose=False, half=True)
 
     # Reverse engineer outputs to find logits
     # See Detect.forward(): https://github.com/ultralytics/ultralytics/blob/b638c4ed9a24270a6875cdd47d9eeda99204ef5a/ultralytics/nn/modules/head.py#L22
@@ -116,31 +132,41 @@ def run_predict(img, img_path, model, hooks, num_classes, conf_threshold, iou_th
     img_shape = input_hook.input[0].shape[2:]
     orig_img_shape = model.predictor.batch[1][batch_idx].shape[:2]
 
+    # Transpose data
+    xywh_sigmoid = xywh_sigmoid.T      # shape: [6300, 4 + C]
+    all_logits = all_logits.T          # shape: [6300, C]
+
     # Compute predictions
-    boxes = []
-    for i in range(xywh_sigmoid.shape[-1]): # for each predicted box...
-        x0, y0, x1, y1, *class_probs_after_sigmoid = xywh_sigmoid[:,i]
-        x0, y0, x1, y1 = ops.scale_boxes(img_shape, np.array([x0.cpu(), y0.cpu(), x1.cpu(), y1.cpu()]), orig_img_shape)
-        logits = all_logits[:,i]
-        
-        boxes.append({
-            'image_id': img_path,
-            'bbox': [x0.item(), y0.item(), x1.item(), y1.item()], # xyxy
-            'bbox_xywh': [(x0.item() + x1.item())/2, (y0.item() + y1.item())/2, x1.item() - x0.item(), y1.item() - y0.item()],
-            'logits': logits.cpu().tolist(),
-            'activations': [p.item() for p in class_probs_after_sigmoid]
-        })
+    # Slice tensors
+    coords = xywh_sigmoid[:, :4]          # [N, 4] — x0, y0, x1, y1
+    activations = xywh_sigmoid[:, 4:]     # [N, C]
+    logits = all_logits                   # [N, C]
 
+    # Scale all boxes using vector ops (no loop)
+    coords_cpu = coords.detach().cpu().numpy()  # shape [N, 4]
+    scaled_coords = np.array([
+        yolo_ops.scale_boxes(img_shape, coords_cpu[i], orig_img_shape)
+        for i in range(coords_cpu.shape[0])
+    ])  # shape [N, 4]
+
+    # Convert to cx, cy, w, h (bbox_xywh)
+    scaled_coords = torch.tensor(scaled_coords, dtype=torch.float32)  # [N, 4]
+    x0, y0, x1, y1 = scaled_coords[:, 0], scaled_coords[:, 1], scaled_coords[:, 2], scaled_coords[:, 3]
+    cx = (x0 + x1) / 2
+    cy = (y0 + y1) / 2
+    w = x1 - x0
+    h = y1 - y0
+    bbox_xywh = torch.stack([cx, cy, w, h], dim=1)  # [N, 4]
+    
     # Non-Maximum-Suppresion (Retain only the most relevant boxes based on confidence scores)
-    boxes_for_nms = torch.stack([
-        torch.tensor([
-            *b['bbox_xywh'],
-            *b['activations'],
-            *b['activations'],
-            *b['logits']]) for b in boxes
-    ], dim=1).unsqueeze(0)
+    boxes_for_nms = torch.cat([
+        bbox_xywh.to(coords.device)  ,       # [N, 4]
+        activations.to(coords.device)  ,     # [N, C]
+        activations.to(coords.device)  ,     # [N, C] again (YOLO-style input)
+        logits.to(coords.device)             # [N, C]
+    ], dim=1).T.unsqueeze(0)  # Transpose to final shape: [1, 4+3C, N] -> [1, N, 4+3C]
 
-    nms_results_batch = ops.non_max_suppression(
+    nms_results_batch = yolo_ops.non_max_suppression(
         boxes_for_nms,
         conf_thres=conf_threshold,
         iou_thres=iou_threshold,
@@ -149,7 +175,6 @@ def run_predict(img, img_path, model, hooks, num_classes, conf_threshold, iou_th
 
     # Initialize final output: one list per class
     class_results = [[] for _ in range(num_classes)]
-
     for nms_results in nms_results_batch:
         if nms_results is None or nms_results.shape[0] == 0:
             continue
@@ -162,6 +187,7 @@ def run_predict(img, img_path, model, hooks, num_classes, conf_threshold, iou_th
             bbox = [x0.item(), y0.item(), x1.item(), y1.item()]  # xyxy
             score = conf.item()
             logits = [p.item() for p in logits]
+
 
             # Pack: [x1, y1, x2, y2, score, logit_0, ..., logit_C]
             row = bbox + [score] + logits
@@ -191,20 +217,20 @@ def run_inference_yolo(model_path, image_set, num_classes, confThresh, iouThresh
         dict: {image_name: list of detections}, each detection = [x1, y1, x2, y2, score, class_idx]
     """
     maxOneDetOneRP = True
+    # Batching not implemented
     batch_size = 1
-    image_set = Path(image_set)
-    with open(image_set, 'r') as f:
-        image_paths = sorted([Path(line.strip()) for line in f if line.strip().endswith('.jpg')])
-    allResults = {}
+    # Preload images (keep original path and loaded image)
+    dataset = ImagePathDataset(args.imageset_path)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=4, collate_fn=collate_fn)
 
     # Load model
     model, hooks = load_and_prepare_model(model_path)
 
-    # Preload images (keep original path and loaded image)
-    preloaded_images = [(p, cv2.imread(str(p))) for p in image_paths]
-
     # Main loop
-    for image_path, img in tqdm.tqdm(preloaded_images, total=len(preloaded_images)):
+    for image_paths_batch, imgs_batch in tqdm.tqdm(dataloader):
+        image_path = image_paths_batch[0]
+        img = imgs_batch[0]
+
         imgName = image_path.name
         allResults[imgName] = []
         all_detections = []

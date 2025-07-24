@@ -8,7 +8,7 @@ NF_CONFIF="flowDet/train/onlyFlow_voc/oF_frcnn_voc_rnvp_logits_rbf_cls_ib_${1}.p
 FEAT_FN="FlowDet_Voc_clsLogits_${1}" # "GMMDet_Voc_msFeats", "CE_Voc_msFeats"
 
 FEAT_TYPE="logits" # 'logits'
-ONLY_EVAL=False
+ONLY_EVAL=True
 
 cd $path
 echo 'In directory:'$path
