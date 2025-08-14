@@ -7,7 +7,7 @@
 #MODEL_BASE_DIR="/home/chen"
 MODEL_BASE_DIR="/home/chen_le"
 #DATASET_BASE_DIR="/media/chen/76AECF8EAECF4579/data"
-DATASET_BASE_DIR="/volume_hot_storage/slurm_data/chen_le/ARCHES"
+DATASET_BASE_DIR="/volume/hot_storage/slurm_data/chen_le/ARCHES"
 DS="ardea10"
 CS="lru2"
 

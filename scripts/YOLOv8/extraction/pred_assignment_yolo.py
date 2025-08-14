@@ -137,8 +137,8 @@ def main():
 
     # Setting path
     split = Path(args.image_set).stem # Split: train/val/test.
-    parts = args.model_path.split('/') # /home/chen/openset_detection/.../best.pt
-    base = f"/{parts[1]}/{parts[2]}/TMNF" # /home/chen/TMNF
+    parts = args.model_path.split('/') # /home/chen_le/openset_detection/.../best.pt
+    base = f"/{parts[1]}/{parts[2]}/TMNF" # /home/chen_le/TMNF
 
 
     pred_assignment(split, args.num_classes, args.conf_thresh, args.iou_thresh, base, args.saveNm)

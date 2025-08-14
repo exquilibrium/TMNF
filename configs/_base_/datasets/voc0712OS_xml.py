@@ -1,7 +1,7 @@
 # dataset settings
 
 dataset_type = 'XMLDataset' ### <<<<<<<<<<---------- Important ---------->>>>>>>>>>
-#data_root = '/media/chen/76AECF8EAECF4579/data/VOCdevkit_xml/'
+#data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/VOCdevkit_xml/'
 data_root = '/volume/hot_storage/slurm_data/chen_le/VOCdevkit_xml/'
 
 img_norm_cfg = dict(

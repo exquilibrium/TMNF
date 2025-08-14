@@ -1,0 +1,2 @@
+Run on old GPU. Libraries dont support RTX30+ gpus
+sbatch --partition=RMC-C01-BATCH --nodelist=rmc-gpu03 --cpus-per-task=4 --mem=60G --gres=gpu:1 --output=slurm-%j.out --time=20:00:00

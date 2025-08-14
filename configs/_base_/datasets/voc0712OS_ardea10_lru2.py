@@ -1,7 +1,7 @@
 # dataset settings
 
 dataset_type = 'XMLDataset' ### <<<<<<<<<<---------- Important ---------->>>>>>>>>>
-#data_root = '/media/chen/76AECF8EAECF4579/data/ardea10_all'
+#data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/ardea10_all'
 data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/ardea10_all'
 
 img_norm_cfg = dict(

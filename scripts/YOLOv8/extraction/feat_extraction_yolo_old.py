@@ -545,7 +545,7 @@ def main():
     left = parts[index - 1]     # 'VOC0712'
     right = parts[index + 1]    # 'YOLO_CS'
     dataset = f"{left}_{right}"  # 'VOC0712_YOLO_CS'
-    save_path = f'/home/chen/TMNF/data/extracted_feat/flowDet/YOLOv8/associated/XMLDataset/{split}/{dataset}'
+    save_path = f'/home/chen_le/TMNF/data/extracted_feat/flowDet/YOLOv8/associated/XMLDataset/{split}/{dataset}'
     save_results_json(results, save_path)
 
 

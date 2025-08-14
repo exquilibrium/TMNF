@@ -7,7 +7,7 @@
 #MODEL_BASE_DIR="/home/chen"
 MODEL_BASE_DIR="/home/chen_le"
 #DATASET_BASE_DIR="/media/chen/76AECF8EAECF4579/data"
-DATASET_BASE_DIR="/volume_hot_storage/slurm_data/chen_le/"
+DATASET_BASE_DIR="/volume/hot_storage/slurm_data/chen_le/"
 
 MODEL_PATH="${MODEL_BASE_DIR}/openset_detection/scripts/YOLOv8/training/runs/detect/train_voc0712/weights/best.pt"
 TRAIN_SET="${DATASET_BASE_DIR}/VOCdevkit_xml/VOC0712/ImageSets/YOLO_CS/train.txt"
