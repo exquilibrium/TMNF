@@ -262,7 +262,6 @@ def assign_eval(ds_dict, raw_res_pth, num_classes, scoreThresh=0.2, iouThresh=0.
 	for imIdx, im in enumerate(tqdm.tqdm(testDataset, total = lenDataset)):
 		imName = testDataset.data_infos[imIdx]['filename']
 
-		#TODO
 		imName = imName.replace('JPEGImages/', '')
 
 		detData = np.asarray(testDets[imName])
@@ -325,7 +324,6 @@ def assign_train(ds_dict_list, raw_res_pth_list, num_logits, iouThresh=0.5):
 		for imIdx, _ in enumerate(tqdm.tqdm(trainDataset, total = lenDataset)):
 			imName = trainDataset.data_infos[imIdx]['filename']
 
-			#TODO
 			imName = imName.replace('JPEGImages/', '')
 
 			detData = np.asarray(trainDets[imName])
