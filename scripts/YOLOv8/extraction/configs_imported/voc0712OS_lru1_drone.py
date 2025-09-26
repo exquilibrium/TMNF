@@ -1,8 +1,16 @@
-# dataset settings
+import os
 
+BASE_DIR_FOLDER = os.path.dirname(os.path.realpath(__file__))
+
+if BASE_DIR_FOLDER == '/home/chen/TMNF':  # Home PC
+    BASE_DATA_FOLDER = '/media/chen/76AECF8EAECF4579/data'
+    BASE_VOC_FOLDER = '/media/chen/76AECF8EAECF4579/data'
+else:  # DLR PC
+    BASE_DATA_FOLDER = '/volume/hot_storage/slurm_data/chen_le/ARCHES'
+    BASE_VOC_FOLDER = '/volume/hot_storage/slurm_data/chen_le'
+
+data_root = BASE_DATA_FOLDER + '/lru1_all'
 dataset_type = 'XMLDataset' ### <<<<<<<<<<---------- Important ---------->>>>>>>>>>
-#data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/lru1_all'
-data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/lru1_all'
 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)

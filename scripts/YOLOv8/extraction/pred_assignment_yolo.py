@@ -42,7 +42,7 @@ def pred_assignment(datasplit: str,
     
     # process train data
     if datasplit == "train":
-        ds_subsets = [data['trainCS']]
+        ds_subsets = [data['trainCS']] # data is from config import
         raw_res_pth_list = [f"{raw_res_dir}/{saveNm}.json"]
 
         print(f'Assigning train data on {dataset_type}')

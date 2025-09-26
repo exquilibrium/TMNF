@@ -1,7 +1,16 @@
-# dataset settings
+import os
 
+BASE_DIR_FOLDER = os.path.dirname(os.path.realpath(__file__))
+
+if BASE_DIR_FOLDER == '/home/chen/TMNF':  # Home PC
+    BASE_DATA_FOLDER = '/media/chen/76AECF8EAECF4579/data'
+    BASE_VOC_FOLDER = '/media/chen/76AECF8EAECF4579/data'
+else:  # DLR PC
+    BASE_DATA_FOLDER = '/volume/hot_storage/slurm_data/chen_le/ARCHES'
+    BASE_VOC_FOLDER = '/volume/hot_storage/slurm_data/chen_le'
+
+data_root = BASE_DATA_FOLDER + '/VOCdevkit_xml/VOC0712'
 dataset_type = 'XMLDataset' ### <<<<<<<<<<---------- Important ---------->>>>>>>>>>
-data_root = '/volume/hot_storage/slurm_data/chen_le/ARCHES/VOCdevkit_xml/'
 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
@@ -45,38 +54,38 @@ data = dict(
             type=dataset_type,
             classes=voc_cs_classes, # CS
             ann_file=[
-                data_root + 'VOC0712/ImageSets/Main_CS/train.txt'
+                data_root + '/ImageSets/Main_CS/train.txt'
             ],
-            img_prefix=[data_root + 'VOC0712/'],
+            img_prefix=[data_root + '/'],
             pipeline=train_pipeline)),
     trainCS=dict(
         type=dataset_type,
         classes=voc_cs_classes, # CS
-        ann_file=data_root + 'VOC0712/ImageSets/Main_CS/train.txt',
-        img_prefix=data_root + 'VOC0712/',
+        ann_file=data_root + '/ImageSets/Main_CS/train.txt',
+        img_prefix=data_root,
         pipeline=test_pipeline),
     val=dict(
         type=dataset_type,
         classes=voc_cs_classes, # CS
-        ann_file=data_root + 'VOC0712/ImageSets/Main_CS/val.txt',
-        img_prefix=data_root + 'VOC0712/',
+        ann_file=data_root + '/ImageSets/Main_CS/val.txt',
+        img_prefix=data_root,
         pipeline=test_pipeline),
     testCS=dict(
         type=dataset_type,
         classes=voc_cs_classes, # CS
-        ann_file=data_root + 'VOC0712/ImageSets/Main_CS/test.txt',
-        img_prefix=data_root + 'VOC0712/',
+        ann_file=data_root + '/ImageSets/Main_CS/test.txt',
+        img_prefix=data_root,
         pipeline=test_pipeline),
     testOS=dict(
         type=dataset_type,
         classes=voc_os_classes, # OS
-        ann_file=data_root + 'VOC0712/ImageSets/Main/test.txt',
-        img_prefix=data_root + 'VOC0712/',
+        ann_file=data_root + '/ImageSets/Main/test.txt',
+        img_prefix=data_root,
         pipeline=test_pipeline),
     testOOD=dict(
         type=dataset_type,
         classes=voc_os_classes, # OOD only
-        ann_file=data_root + 'VOC0712/ImageSets/Main/test_ood.txt',
-        img_prefix=data_root + 'VOC0712/',
+        ann_file=data_root + '/ImageSets/Main/test_ood.txt',
+        img_prefix=data_root,
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='mAP')

@@ -1,14 +1,20 @@
 #!/bin/bash
 
 # Base project root (2 levels up from slurm script)
-#PROJECT_ROOT="/home/chen/TMNF"
-PROJECT_ROOT="/home/chen_le/TMNF"
+#HOME_ROOT="/home/chen/TMNF"
+HOME_ROOT="/home/chen_le"
+
+#DATASET_ROOT="/media/chen/76AECF8EAECF4579/data"
+DATASET_ROOT="/volume/hot_storage/slurm_data/chen_le/ARCHES"
+
+PROJECT_ROOT="${HOME_ROOT}/TMNF"
+
 
 # Run extract script --tmnf_os
-#bash "$PROJECT_ROOT/scripts/YOLOv8/extraction/extract_lru1.sh"
-#bash "$PROJECT_ROOT/scripts/YOLOv8/extraction/extract_lru1_drone.sh"
-#bash "$PROJECT_ROOT/scripts/YOLOv8/extraction/extract_lru1_lander.sh"
-#bash "$PROJECT_ROOT/scripts/YOLOv8/extraction/extract_lru1_lru2.sh"
+#bash "$PROJECT_ROOT/scripts/YOLOv8/extraction/extract_lru1.sh" $HOME_ROOT $DATASET_ROOT
+#bash "$PROJECT_ROOT/scripts/YOLOv8/extraction/extract_lru1_drone.sh" $HOME_ROOT $DATASET_ROOT
+#bash "$PROJECT_ROOT/scripts/YOLOv8/extraction/extract_lru1_lander.sh" $HOME_ROOT $DATASET_ROOT
+#bash "$PROJECT_ROOT/scripts/YOLOv8/extraction/extract_lru1_lru2.sh" $HOME_ROOT $DATASET_ROOT
 
 # Run train and test flowDet script --tmnf_mmdet
 bash "$PROJECT_ROOT/examples/flowDet/train_onlyFlow_yolo.sh" "lru1"

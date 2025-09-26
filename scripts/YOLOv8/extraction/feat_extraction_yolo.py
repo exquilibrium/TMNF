@@ -139,7 +139,7 @@ def run_predict(img, img_path, model, hooks, num_classes, conf_threshold, iou_th
     xywh_sigmoid = xywh_sigmoid.T      # shape: [6300, 4 + C]
     all_logits = all_logits.T          # shape: [6300, C]
 
-	# Compute predictions
+    # Compute predictions
     # Slice tensors
     coords = xywh_sigmoid[:, :4]          # [N, 4] — x0, y0, x1, y1
     activations = xywh_sigmoid[:, 4:]     # [N, C]
